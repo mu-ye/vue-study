@@ -1,94 +1,88 @@
 <template>
   <div>
-    <a-card>
-      <div class="table-operations">
-        <a-upload
-          name="file"
-          :multiple="false"
-          action="/njdt/judge/uploadJudge"
-          :headers="headers"
-          @change="handleChange"
-        >
-          <a-button>
-            <a-icon type="upload"/>
-            导入裁判数据
-          </a-button>
-        </a-upload>
-      </div>
-      <a-table :columns="columns" :data-source="data" rowKey="id" :pagination="false" style="margin-top: 10px">
-      </a-table>
-    </a-card>
-  </div>
+    <p> </p>
+    <a-tree
+      :load-data="onLoadData"
+      :tree-data="treeData"
+      :checkable="checkAble"
+      @expand="onExpand"
+      @load="onLoad"
+      @check="onCheck"
+      @select="onSelect" />
+  </div >
 </template>
 
 <script>
-  const columns = [
-    {
-      title: 'id',
-      dataIndex: 'id',
-      key: 'id'
-    },
-    {
-      title: '裁判编码',
-      dataIndex: 'code',
-      key: 'code'
-    },
-    {
-      title: '姓名',
-      dataIndex: 'name',
-      key: 'name'
-    },
-    // {
-    //   title: '性别',
-    //   dataIndex: 'sex',
-    //   key: 'sex'
-    // },
-    {
-      title: '所属单位',
-      dataIndex: 'companyName',
-      key: 'companyName'
-    },
-    {
-      title: '身份证',
-      dataIndex: 'idCard',
-      key: 'idCard'
-    },
-    {
-      title: '电话',
-      dataIndex: 'phone',
-      key: 'phone'
-    }
-  ]
   export default {
     data () {
       return {
-        columns,
-        data: [],
-        headers: {
-          authorization: 'authorization-text'
-        }
+        checkAble: true,
+        treeData: []
       }
     },
     mounted () {
-      this.init()
+      this.getFirstLevelData()
     },
     methods: {
-      init () {
-        this.axios.get('/judge/getJudgeList').then(data => {
+      getFirstLevelData () {
+        this.axios.get('/tree/getFirstLevelTreeVO?level=0').then(data => {
           console.log(data)
-          this.data = data
+          this.treeData = data
         })
       },
-      handleChange (info) {
-        if (info.file.status !== 'uploading') {
-          console.log(info.file, info.fileList)
+      onLoadData (treeNode) {
+        return new Promise(resolve => {
+          if (treeNode.dataRef.children) {
+            resolve()
+            return
+          }
+          this.axios.get('/tree/getFirstLevelTreeVO?level=' + treeNode.dataRef.key).then(data => {
+            console.log('treeNode.key' + treeNode.dataRef.key)
+            treeNode.dataRef.children = data
+            this.treeData = [...this.treeData]
+            resolve()
+          })
+        })
+      },
+      onSelect (selectedKeys, info) {
+        console.log('点击节点时触发')
+        console.log('获取点击节点的key:', info.node.dataRef.key)
+        console.log('获取点击节点的title:', info.node.dataRef.title)
+        console.log('获取点击节点的isLeaf:', info.node.dataRef.isLeaf)
+      },
+      onCheck (checkedKeys, info) {
+        console.log('选中节点时触发')
+        // 获取全部选中的节点
+        console.log('选中节点数目', checkedKeys.valueOf().length)
+        console.log('选中第一个节点key:', checkedKeys.valueOf()[0])
+        // 点击复选框就会执行的操作
+        console.log('获取点击复选框的key:', info.node.dataRef.key)
+        console.log('获取点击复选框的title:', info.node.dataRef.title)
+        console.log('获取点击复选框的isLeaf:', info.node.dataRef.isLeaf)
+      },
+      onLoad (event, node) {
+        /**
+         *  查看操作手册，打印参数信息。json 类型的数据直接 . 获取，比如 node.node;
+         *  如果 node 是 : VueComponent（Vue 组件）
+         */
+        console.log('节点数据加载完成时调用')
+        console.log('event:', event)
+        console.log('node:', node)
+        console.log('node.node.dataRef.key:', node.node.dataRef.key)
+      },
+      onExpand (expandedKeys, info) {
+        console.log('节点展开或收起时触发')
+        // 所有展开节点
+        console.log('expandedKeys：', expandedKeys)
+        // 遍历所有展开节点
+        const expandNodeLength = expandedKeys.valueOf().length
+        const ExpandNodeArray = []
+        for (let i = 0; i < expandNodeLength; i++) {
+          ExpandNodeArray[i] = expandedKeys.valueOf()[i]
         }
-        if (info.file.status === 'done') {
-          this.$message.success(`${info.file.name} 上传成功！`)
-          this.init()
-        } else if (info.file.status === 'error') {
-          this.$message.error(`${info.file.name} 上传失败`)
-        }
+        console.log('所有展开节点key数组 ExpandNodeArray:', ExpandNodeArray)
+        // 当前节点
+        console.log('info：', info)
       }
     }
   }

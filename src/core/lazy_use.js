@@ -45,6 +45,7 @@ import {
   Result,
   Statistic,
   Descriptions,
+  Pagination,
   message,
   notification
 } from 'ant-design-vue'
@@ -52,7 +53,10 @@ import {
 // ext library
 import Dialog from '@/components/Dialog'
 import PageLoading from '@/components/PageLoading'
+import ToTop from '@/components/ToTop'
 
+Vue.use(Pagination)
+Vue.use(ToTop)
 Vue.use(ConfigProvider)
 Vue.use(Layout)
 Vue.use(Input)

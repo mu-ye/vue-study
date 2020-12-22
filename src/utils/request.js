@@ -21,6 +21,7 @@ const errorHandler = error => {
     const data = response.data
     // 从 localstorage 获取 token
     const token = localStorage.get('token')
+    console.log('respose.status', response.status)
     if (response.status === 403) {
       notification.error({
         message: 'Forbidden',
@@ -44,8 +45,11 @@ const errorHandler = error => {
   return Promise.reject(error)
 }
 
-// 添加请求拦截器
+/**
+ *  添加请求拦截器
+ */
 request.interceptors.request.use(config => {
+  console.log('request.interceptors')
   const token = localStorage.getItem('token')
   // 如果 token 存在，让每个请求携带自定义 token 请根据实际情况自行修改
   if (token) {
@@ -54,7 +58,9 @@ request.interceptors.request.use(config => {
   return config
 }, errorHandler)
 
-// response interceptor
+/**
+ * 添加响应拦截器
+ */
 request.interceptors.response.use(response => {
   console.log('response interceptor', response)
   const { data } = response
