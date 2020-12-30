@@ -17,6 +17,7 @@
       <right-content :top-menu="settings.layout === 'topmenu'" :is-mobile="isMobile" :theme="settings.theme" />
     </template>
     <template v-slot:footerRender>
+      footerRender
       <div/>
     </template>
     <router-view />
@@ -28,7 +29,6 @@ import { updateTheme } from '@ant-design-vue/pro-layout'
 import { mapState } from 'vuex'
 import defaultSettings from '@/config/defaultSettings'
 import RightContent from '@/components/GlobalHeader/RightContent'
-
 export default {
   name: 'BasicLayout',
   components: {
