@@ -14,7 +14,7 @@ const IndexRoutePath = '/'
 router.beforeEach((to, from, next) => {
   NProgress.start()
   to.meta?.title && setDocumentTitle(`${to.meta.title} - ${domTitle}`)
-  if (localStorage.getItem('token')) {
+  if (localStorage.getItem('access-token')) {
     if (to.path === loginRoutePath) {
       next({ path: IndexRoutePath })
       NProgress.done()

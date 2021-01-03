@@ -16,30 +16,32 @@ const request = axios.create({
  */
 const errorHandler = error => {
   const { name, response } = error
-  console.log('error', name, ...response)
+  console.log('name', name)
   if (response) {
     const data = response.data
-    // 从 localstorage 获取 token
-    const token = localStorage.get('token')
-    console.log('respose.status', response.status)
+    // 根据 http状态码（httpStatus）执行不同操作
+    if (response.status === 401) {
+      notification.error({
+        message: '用户名或密码错误，用户登录失败！'
+        // description: 'Authorization verification failed'
+      })
+    }
+
+    if (response.status === 402) {
+      console.log('402data', data.errorMessage)
+      localStorage.setItem('access-token', data.errorMessage)
+    }
+    if (response.status === 400) {
+      alert('账号过期，请重新登录')
+      localStorage.clear()
+      window.location.href = '/user/login'
+    }
+
     if (response.status === 403) {
       notification.error({
         message: 'Forbidden',
         description: data.message
       })
-    }
-    if (response.status === 401 && !(data.result && data.result.isLogin)) {
-      notification.error({
-        message: 'Unauthorized',
-        description: 'Authorization verification failed'
-      })
-      if (token) {
-        // store.dispatch('Logout').then(() => {
-        //   setTimeout(() => {
-        //     window.location.reload()
-        //   }, 1500)
-        // })
-      }
     }
   }
   return Promise.reject(error)
@@ -50,7 +52,7 @@ const errorHandler = error => {
  */
 request.interceptors.request.use(config => {
   console.log('request.interceptors')
-  const token = localStorage.getItem('token')
+  const token = localStorage.getItem('access-token')
   // 如果 token 存在，让每个请求携带自定义 token 请根据实际情况自行修改
   if (token) {
     config.headers['Authorization'] = token

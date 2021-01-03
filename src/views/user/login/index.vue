@@ -63,7 +63,8 @@ export default {
         })
           .then(data => {
             console.log('data', data)
-            localStorage.setItem('token', data)
+            localStorage.setItem('access-token', data[0])
+            localStorage.setItem('refresh-token', data[1])
             this.$notification.success({
               message: '登录成功',
               description: '欢迎回来'
@@ -72,7 +73,7 @@ export default {
           })
           .catch(err => {
             console.log('err', { ...err })
-            this.$message.error(err?.data?.errorMessage || '登录失败')
+            /* this.$message.error(err?.data?.errorMessage || '登录失败') */
           })
           .finally(() => {
             this.loading = false
