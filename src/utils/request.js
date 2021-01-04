@@ -7,17 +7,26 @@ import { refreshToken } from '@/api/user'
 const request = axios.create({
   // API 请求的默认前缀
   baseURL: '/api',
-  timeout: 6000 // 请求超时时间
+  // 请求超时时间
+  timeout: 6000
 })
 
 /**
- * axios 请求拦截器和响应拦截器错误处理程序
+ *  获取 accessToken
+ * @returns {string}
+ */
+function getAccessToken () {
+  return localStorage.getItem('access-token')
+}
+
+/**
+ * axios 请求拦截器和响应拦截器错误处理程序，只有当请求失败是调用（httpStatus 不等于 200）
+ *
  * @param error
  * @returns {Promise<never>}
  */
 const errorHandler = error => {
-  const { name, response } = error
-  console.log('name', name)
+  const { response } = error
   if (response) {
     const data = response.data
     // 根据 http状态码（httpStatus）执行不同操作
@@ -26,19 +35,16 @@ const errorHandler = error => {
         message: '用户名或密码错误，用户登录失败！'
         // description: 'Authorization verification failed'
       })
-    }
-
-    if (response.status === 402) {
+    } else if (response.status === 402) {
       console.log('402data', data.errorMessage)
       localStorage.setItem('access-token', data.errorMessage)
-    }
-    if (response.status === 400) {
+    } else if (response.status === 400) {
       alert('账号过期，请重新登录')
+      // 清空 localStorage 中数据，并路由跳转到登录页面
       localStorage.clear()
       window.location.href = '/user/login'
-    }
-
-    if (response.status === 403) {
+    } else if (response.status === 403) {
+      // 全局消息通知
       notification.error({
         message: 'Forbidden',
         description: data.message
@@ -52,8 +58,8 @@ const errorHandler = error => {
  *  添加请求拦截器
  */
 request.interceptors.request.use(config => {
-  console.log('request.interceptors')
-  const token = localStorage.getItem('access-token')
+  console.log('请求拦截器------')
+  const token = getAccessToken()
   const refreshToken = localStorage.getItem('refresh-token')
   // 如果 token 存在，让每个请求携带自定义 token 请根据实际情况自行修改
   console.log('请求路径', config.url)
@@ -82,18 +88,19 @@ request.interceptors.response.use(response => {
     } else if (data.errorCode === '4011') {
       // 刷新 accessToken 和 refreshToken
       console.log(data.errorMessage)
-      refreshToken().then(data => {
-        localStorage.setItem('access-token', data[0])
-        localStorage.setItem('refresh-token', data[1])
-        console.log('token 刷新成功')
-        const config = response.config
-        config.baseURL = '/api'
-        config.headers['Authorization'] = data[0]
-        return request(config)
-      })
-      .catch(err => {
-        console.log(err)
-      })
+      refreshToken()
+        .then(data => {
+          localStorage.setItem('access-token', data[0])
+          localStorage.setItem('refresh-token', data[1])
+          console.log('token 刷新成功')
+          const config = response.config
+          config.baseURL = '/api'
+          config.headers['Authorization'] = data[0]
+          return request(config)
+        })
+        .catch(err => {
+          console.log(err)
+        })
     } else if (data.errorCode === '4012') {
       alert('账号过期，请重新登录')
       localStorage.clear()
