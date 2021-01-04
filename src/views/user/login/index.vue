@@ -51,7 +51,6 @@ export default {
       this.$router.push({ path: '/' })
     },
     handleSubmit () {
-      console.log(this.form)
       this.$refs.ruleForm.validate(valid => {
         if (!valid) {
           return false
@@ -62,7 +61,7 @@ export default {
           // password: SHA256(this.form.password).toString()
         })
           .then(data => {
-            console.log('data', data)
+            // 将 accessToken 和 refreshToken 保存在localStorage中
             localStorage.setItem('access-token', data[0])
             localStorage.setItem('refresh-token', data[1])
             this.$notification.success({

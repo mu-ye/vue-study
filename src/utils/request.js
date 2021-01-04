@@ -2,6 +2,7 @@ import axios from 'axios'
 import notification from 'ant-design-vue/es/notification'
 import { VueAxios } from './axios'
 import message from 'ant-design-vue/es/message'
+import { refreshToken } from '@/api/user'
 // 创建 axios 实例
 const request = axios.create({
   // API 请求的默认前缀
@@ -53,9 +54,16 @@ const errorHandler = error => {
 request.interceptors.request.use(config => {
   console.log('request.interceptors')
   const token = localStorage.getItem('access-token')
+  const refreshToken = localStorage.getItem('refresh-token')
   // 如果 token 存在，让每个请求携带自定义 token 请根据实际情况自行修改
+  console.log('请求路径', config.url)
   if (token) {
-    config.headers['Authorization'] = token
+    if (config.url === '/auth/refreshToken') {
+      console.log('设置未 refreshToken')
+      config.headers['Authorization'] = refreshToken
+    } else {
+      config.headers['Authorization'] = token
+    }
   }
   return config
 }, errorHandler)
@@ -68,12 +76,36 @@ request.interceptors.response.use(response => {
   const { data } = response
   // data success data error
   if (data.success === false) {
-    // 抛出错误到 errorHandler 中处理
-    const error = new Error(data.errorMessage || '操作失' + '败')
-    error.name = 'BizError'
-    error.data = data
-    message.error(data.errorMessage || '操作失败')
-    throw error
+    if (data.errorCode === '4010') {
+      // 用户名密码错误处理
+      message.error(data.errorMessage)
+    } else if (data.errorCode === '4011') {
+      // 刷新 accessToken 和 refreshToken
+      console.log(data.errorMessage)
+      refreshToken().then(data => {
+        localStorage.setItem('access-token', data[0])
+        localStorage.setItem('refresh-token', data[1])
+        console.log('token 刷新成功')
+        const config = response.config
+        config.baseURL = '/api'
+        config.headers['Authorization'] = data[0]
+        return request(config)
+      })
+      .catch(err => {
+        console.log(err)
+      })
+    } else if (data.errorCode === '4012') {
+      alert('账号过期，请重新登录')
+      localStorage.clear()
+      window.location.href = '/user/login'
+    } else {
+      // 抛出错误到 errorHandler 中处理
+      const error = new Error(data.errorMessage || '操作失' + '败')
+      error.name = 'BizError'
+      error.data = data
+      message.error(data.errorMessage || '操作失败')
+      throw error
+    }
   }
   return data.data
 }, errorHandler)
