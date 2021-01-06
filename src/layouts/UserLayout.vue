@@ -3,85 +3,129 @@
     <div class="container">
       <div class="top">
         <div class="header">
-          <span class="title">国赛考评系统</span>
+          <a href="/">
+            <img src="~@/assets/logo.svg" class="logo" alt="南京地铁运营有限责任公司" />
+            <span class="title">国赛考评系统</span>
+          </a>
         </div>
         <div class="desc">
           全国城市轨道交通行业职业技能竞赛城市轨道交通通信工技能竞赛
         </div>
       </div>
       <router-view />
+      <div class="footer">
+        <div class="links">
+          <img src="~@/assets/logo.svg" class="logo" alt="南京地铁运营有限责任公司" />
+          <img src="~@/assets/maker.png" class="logo" alt="电子及信息技术研究院" />
+        </div>
+        <div class="copyright">
+          Copyright &copy; 2020 电子及信息技术研究院
+        </div>
+      </div>
     </div>
   </div>
 </template>
 
 <script>
-export default {
-  name: 'UserLayout',
-  mounted () {
-    document.body.classList.add('userLayout')
-  },
-  beforeDestroy () {
-    document.body.classList.remove('userLayout')
+  export default {
+    name: 'UserLayout',
+    mounted () {
+      document.body.classList.add('userLayout')
+    },
+    beforeDestroy () {
+      document.body.classList.remove('userLayout')
+    }
   }
-}
 </script>
 
 <style lang="less" scoped>
-#userLayout.user-layout-wrapper {
-  height: 100%;
+  #userLayout.user-layout-wrapper {
+    height: 100%;
 
-  .container {
-    width: 100%;
-    min-height: 100%;
-    background: #f0f2f5 url(~@/assets/background.svg) no-repeat 50%;
-    background-size: 100%;
-    padding: 110px 0 144px;
-    position: relative;
+    .container {
+      width: 100%;
+      min-height: 100%;
+      background: #f0f2f5 url(~@/assets/background.svg) no-repeat 50%;
+      background-size: 100%;
+      padding: 110px 0 144px;
+      position: relative;
 
-    a {
-      text-decoration: none;
-    }
+      a {
+        text-decoration: none;
+      }
 
-    .top {
-      text-align: center;
+      .top {
+        text-align: center;
 
-      .header {
-        height: 44px;
-        line-height: 44px;
+        .header {
+          height: 44px;
+          line-height: 44px;
 
-        .badge {
-          position: absolute;
-          display: inline-block;
-          line-height: 1;
-          vertical-align: middle;
-          margin-left: -12px;
-          margin-top: -10px;
-          opacity: 0.8;
+          .badge {
+            position: absolute;
+            display: inline-block;
+            line-height: 1;
+            vertical-align: middle;
+            margin-left: -12px;
+            margin-top: -10px;
+            opacity: 0.8;
+          }
+
+          .logo {
+            height: 44px;
+            vertical-align: top;
+            margin-right: 16px;
+            border-style: none;
+          }
+
+          .title {
+            font-size: 33px;
+            color: rgba(0, 0, 0, 0.85);
+            font-family: Avenir, 'Helvetica Neue', Arial, Helvetica, sans-serif;
+            font-weight: 600;
+            position: relative;
+            top: 2px;
+          }
         }
 
-        .title {
-          font-size: 33px;
-          color: rgba(0, 0, 0, 0.85);
-          font-family: Avenir, 'Helvetica Neue', Arial, Helvetica, sans-serif;
-          font-weight: 600;
-          position: relative;
-          top: 2px;
+        .desc {
+          font-size: 14px;
+          color: rgba(0, 0, 0, 0.45);
+          margin-top: 12px;
+          margin-bottom: 40px;
         }
       }
 
-      .desc {
-        font-size: 14px;
-        color: rgba(0, 0, 0, 0.45);
-        margin-top: 12px;
-        margin-bottom: 40px;
+      .main {
+        min-width: 260px;
+        width: 368px;
+        margin: 0 auto;
       }
-    }
 
-    .main {
-      min-width: 260px;
-      width: 368px;
-      margin: 0 auto;
+      .footer {
+        position: absolute;
+        width: 100%;
+        bottom: 0;
+        padding: 0 16px;
+        margin: 48px 0 24px;
+        text-align: center;
+
+        .links {
+          margin-bottom: 8px;
+          font-size: 14px;
+          .logo {
+            height: 18px;
+            &:not(:last-child) {
+              margin-right: 24px;
+            }
+          }
+        }
+
+        .copyright {
+          color: rgba(0, 0, 0, 0.45);
+          font-size: 14px;
+        }
+      }
     }
   }
-}
 </style>

@@ -8,10 +8,11 @@
         height="14"
         style="margin-right: 24px"
       />
+      <!--@ 代指 src-->
       <img src="~@/assets/maker.png" class="logo" alt="电子及信息技术研究院" height="14" />
     </template>
     <template v-slot:copyright>
-      Copyright &copy; 2020 电子及信息技术研究院
+      Copyright &copy; 2021 电子及信息技术研究院
     </template>
   </global-footer>
 </template>

@@ -21,4 +21,25 @@
         v-model:expandedKeys="expandedKeys"
         @select="onSelect"                    # 控件中的事件
       >
-    
+
+**5. 基本页面调用关系**
+
+        layouts - > BasicLayout.vue 中整合了整个后台管理系统的通用部分
+            1. 右侧内容               @/components/GlobalHeader/RightContent
+                  AvatarDropdown     @components/GlobalHeader/AvatarDropdown
+            2. 底部内容               @/components/GlobalFooter
+            3. 管理系统的logo         ../assets/logo.svg?inline
+            
+        eg: 页面中导入自定义组件：
+        
+        import RightContent from '@/components/GlobalHeader/RightContent'
+        export default {
+         components: {
+              RightContent
+            }
+         }
+     
+   
+**6. 基础路径**
+   
+         <img src="~@/assets/maker.png"/>   @ 代指 src

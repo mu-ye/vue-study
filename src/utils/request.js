@@ -12,7 +12,13 @@ const request = axios.create({
 })
 
 /**
- *  获取 accessToken
+ * 刷新 token 的请求 URL
+ * @type {string}
+ */
+const REFRESH_TOKEN_URL = '/auth/refreshToken'
+
+/**
+ * 获取 accessToken
  * @returns {string}
  */
 function getAccessToken () {
@@ -20,7 +26,15 @@ function getAccessToken () {
 }
 
 /**
- * axios 请求拦截器和响应拦截器错误处理程序，只有当请求失败是调用（httpStatus 不等于 200）
+ * 获取刷新token
+ * @returns {string}
+ */
+function getRefreshToken () {
+  return localStorage.getItem('refresh-token')
+}
+
+/**
+ * 请求拦截器和响应拦截器错误处理程序，只有当请求失败是调用（ httpStatus 不等于 200）
  *
  * @param error
  * @returns {Promise<never>}
@@ -55,20 +69,17 @@ const errorHandler = error => {
 }
 
 /**
- *  添加请求拦截器
+ * 添加请求拦截器
  */
 request.interceptors.request.use(config => {
-  console.log('请求拦截器------')
-  const token = getAccessToken()
-  const refreshToken = localStorage.getItem('refresh-token')
-  // 如果 token 存在，让每个请求携带自定义 token 请根据实际情况自行修改
-  console.log('请求路径', config.url)
-  if (token) {
-    if (config.url === '/auth/refreshToken') {
-      console.log('设置未 refreshToken')
-      config.headers['Authorization'] = refreshToken
-    } else {
-      config.headers['Authorization'] = token
+  // 如果请求是 [刷新token请求], 请求头中携带的token为 RefreshToken, 其他请求携带的token为 accessToken
+  if (config.url === REFRESH_TOKEN_URL) {
+    config.headers['Authorization'] = getRefreshToken()
+  } else {
+    // 如果 accessToken 存在,将 token 放入请求头中
+    const accessToken = getAccessToken()
+    if (accessToken) {
+      config.headers['Authorization'] = accessToken
     }
   }
   return config
@@ -78,31 +89,36 @@ request.interceptors.request.use(config => {
  * 添加响应拦截器
  */
 request.interceptors.response.use(response => {
-  console.log('response interceptor', response)
+  // 拦截从后台截取到的数据 data结构为{ success ； data ；errorCode ；errorMessage ；}
   const { data } = response
-  // data success data error
+  // 根据后台返回异常的错误码（errorCode）, 进行响应的处理
   if (data.success === false) {
     if (data.errorCode === '4010') {
       // 用户名密码错误处理
       message.error(data.errorMessage)
     } else if (data.errorCode === '4011') {
-      // 刷新 accessToken 和 refreshToken
-      console.log(data.errorMessage)
+      // errorCode = 4011 时，向服务器请求新的 accessToken 和 refreshToken
       refreshToken()
         .then(data => {
+          // 将获取的 accessToken 和 refreshToken 保存在 localStorage 中
           localStorage.setItem('access-token', data[0])
           localStorage.setItem('refresh-token', data[1])
           console.log('token 刷新成功')
+          // 再次发起之前的请求，实现 token 的无痛刷新
+          // 获取之前请求的config,请求头中设置新的 accessToken
           const config = response.config
           config.baseURL = '/api'
-          config.headers['Authorization'] = data[0]
+          config.headers['Authorization'] = getAccessToken()
           return request(config)
         })
         .catch(err => {
           console.log(err)
         })
     } else if (data.errorCode === '4012') {
-      alert('账号过期，请重新登录')
+      notification.error({
+        message: '账号信息过期，请重新登录 ！'
+      })
+      // 清除本地 accessToken 和 refreshToken,并跳转到登录界面
       localStorage.clear()
       window.location.href = '/user/login'
     } else {
