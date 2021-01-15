@@ -1,109 +1,164 @@
 <template>
-  <div style="margin-top: 1600px">
-    <back-top></back-top>
-    <a-tree
-      :load-data="onLoadData"
-      :tree-data="treeData"
-      :checkable="checkAble"
-      @expand="onExpand"
-      @load="onLoad"
-      @check="onCheck"
-      @select="onSelect" />
-
+  <div>
+    <div>
+      <a-button type="primary" @click="addRecord"> 添加一条记录 </a-button>
+      <a-divider type="vertical"></a-divider>
+      <a-button type="primary" @click="addRecord"> 批量导入 </a-button>
+    </div>
+    <div style="margin-top: 25px">
+      <a-table
+        bordered
+        :data-source="tableData"
+        :columns="columns"
+        rowKey="username"
+        :pagination="false"
+      >
+        <template slot="operation" slot-scope="text, record">
+          <a-popconfirm
+            title="确认删除?"
+            cancelText="取消"
+            okText="确认"
+            @confirm="() => deleteTableRecordById(record.id)"
+          >
+            <a href="javascript:;" class="deleteColor">删除</a>
+          </a-popconfirm>
+          <a-divider type="vertical"/>
+          <a href="javascript:;">编辑</a>
+        </template>
+      </a-table>
+      <!-- 添加用户 -->
+      <a-drawer
+        title=" 添加一条记录"
+        width="520"
+        :visible="visible"
+        :body-style="{paddingBottom: '80px'}"
+        @close="onDrawerClose"
+      >
+        <a-form-model
+          :model="formData"
+          :rules="rules"
+          ref="ruleForm"
+          :label-col="labelCol"
+          :wrapper-col="wrapperCol">
+          <a-form-model-item label="用户名" prop="username" >
+            <a-input v-model="formData.username"></a-input>
+          </a-form-model-item>
+          <a-form-model-item label="密码" prop="password">
+            <a-input v-model="formData.password"></a-input>
+          </a-form-model-item>
+          <a-form-model-item :wrapper-col="{ span: 14, offset: 4 }">
+            <a-button type="primary" @click="onSubmit">
+              提交
+            </a-button>
+            <a-button style="margin-left: 10px;" @click="resetForm">
+              取消
+            </a-button>
+          </a-form-model-item>
+        </a-form-model>
+      </a-drawer>
+    </div>
   </div>
 </template>
-
 <script>
-  import BackTop from '@/components/BackTop/index'
+  import request from '@/utils/request'
   export default {
-    components: {
-      BackTop
-    },
     data () {
       return {
-        checkAble: true,
-        treeData: []
+        // 表格数据
+        columns: [
+          {
+            align: 'center',
+            title: '姓名',
+            dataIndex: 'username',
+            width: '25%'
+          },
+          {
+            align: 'center',
+            title: '密码',
+            width: '25%',
+            dataIndex: 'password'
+          },
+          {
+            align: 'center',
+            title: '操作',
+            width: '50%',
+            dataIndex: 'id',
+            scopedSlots: { customRender: 'operation' }
+          }
+        ],
+        tableData: undefined,
+        // 添加记录
+        formData: {
+          username: undefined,
+          password: undefined
+        },
+        rules: {
+          username: [{ message: '请输入用户名', required: true, trigger: ['change', 'blur'], whitespace: true }],
+          password: [{ message: '请输入密码', required: true, trigger: ['change', 'blur'], whitespace: true }]
+        },
+
+        visible: false,
+        labelCol: { span: 4 },
+        wrapperCol: { span: 18 }
+
       }
     },
     mounted () {
-      this.getFirstLevelData()
+      // 页面加载时执行的函数
+      this.getTableData()
     },
     methods: {
-      getFirstLevelData () {
-        this.axios.get('/tree/getFirstLevelTreeVO?level=0').then(data => {
-           console.log(data)
-          this.treeData = data
-          })
-      },
-      onLoadData (treeNode) {
-        return new Promise(resolve => {
-          if (treeNode.dataRef.children) {
-            resolve()
-            return
-          }
-          this.axios.get('/tree/getFirstLevelTreeVO?level=' + treeNode.dataRef.key).then(data => {
-            console.log('treeNode.key' + treeNode.dataRef.key)
-            treeNode.dataRef.children = data
-            this.treeData = [...this.treeData]
-            resolve()
-          })
+      getTableData () {
+        request.get('/user/getList')
+        .then(data => {
+            this.tableData = data
         })
       },
-      onSelect (selectedKeys, info) {
-        console.log('点击节点时触发')
-        console.log('获取点击节点的key:', info.node.dataRef.key)
-        console.log('获取点击节点的title:', info.node.dataRef.title)
-        console.log('获取点击节点的isLeaf:', info.node.dataRef.isLeaf)
+      deleteTableRecordById (id) {
+        request.post('/user/deleteById', {
+          param: {
+            id: id
+          }
+        })
+        .then(data => {
+          // 刷新表格
+          this.getTableData()
+        })
       },
-      onCheck (checkedKeys, info) {
-        console.log('选中节点时触发')
-        // 获取全部选中的节点
-        console.log('选中节点数目', checkedKeys.valueOf().length)
-        console.log('选中第一个节点key:', checkedKeys.valueOf()[0])
-        // 点击复选框就会执行的操作
-        console.log('获取点击复选框的key:', info.node.dataRef.key)
-        console.log('获取点击复选框的title:', info.node.dataRef.title)
-        console.log('获取点击复选框的isLeaf:', info.node.dataRef.isLeaf)
+      onSubmit () {
+        this.$refs.ruleForm.validate(valid => {
+          if (valid) {
+            request.post('/user/add', {
+                ...this.formData
+              }).then(data => {
+              this.visible = false
+              this.getTableData()
+            })
+          } else {
+            // 验证失败执行的操作
+            console.log('error submit!!')
+            return false
+          }
+        })
       },
-      onLoad (event, node) {
-        /**
-         *  查看操作手册，打印参数信息。json 类型的数据直接 . 获取，比如 node.node;
-         *  如果 node 是 : VueComponent（Vue 组件）
-         */
-        console.log('节点数据加载完成时调用')
-        console.log('event:', event)
-        console.log('node:', node)
-        console.log('node.node.dataRef.key:', node.node.dataRef.key)
+
+      onDrawerClose () {
+        this.visible = false
+        // 刷新数据操作
       },
-      onExpand (expandedKeys, info) {
-        console.log('节点展开或收起时触发')
-        // 所有展开节点
-        console.log('expandedKeys：', expandedKeys)
-        // 遍历所有展开节点
-        const expandNodeLength = expandedKeys.valueOf().length
-        const ExpandNodeArray = []
-        for (let i = 0; i < expandNodeLength; i++) {
-          ExpandNodeArray[i] = expandedKeys.valueOf()[i]
-        }
-        console.log('所有展开节点key数组 ExpandNodeArray:', ExpandNodeArray)
-        // 当前节点
-        console.log('info：', info)
+      addRecord () {
+        this.visible = true
+      },
+
+      resetForm () {
+        this.$refs.ruleForm.resetFields()
       }
+
     }
   }
 </script>
-<style scoped>
-  #components-back-top-demo-custom .ant-back-top {
-    bottom: 100px;
-  }
-  #components-back-top-demo-custom .ant-back-top-inner {
-    height: 40px;
-    width: 40px;
-    line-height: 40px;
-    border-radius: 4px;
-    background-color: #1088e9;
-    color: #fff;
-    text-align: center;
-    font-size: 20px;
+<style>
+  .deleteColor{
+    color: red;
   }
 </style>
