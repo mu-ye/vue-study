@@ -3,14 +3,25 @@
     <div>
       <a-button type="primary" @click="addRecord"> 添加一条记录 </a-button>
       <a-divider type="vertical"></a-divider>
-      <a-button type="primary" @click="addRecord"> 批量导入 </a-button>
+      <a-button type="dashed" href="/user/test/xxxx.txt" download="a.txt">模板下载</a-button>
+      <a-divider type="vertical"></a-divider>
+      <a-upload
+        name="file"
+        :multiple="false"
+        action="/njdt/test-result/readExcel"
+        :headers="headers"
+        :before-upload="beforeUpload"
+        @change="handleChange"
+      >
+        <a-button> <a-icon type="upload" /> 批量添加 </a-button>
+      </a-upload>
     </div>
     <div style="margin-top: 25px">
       <a-table
         bordered
         :data-source="tableData"
         :columns="columns"
-        rowKey="username"
+        rowKey="id"
         :pagination="false"
       >
         <template slot="operation" slot-scope="text, record">
@@ -82,7 +93,6 @@
             align: 'center',
             title: '操作',
             width: '50%',
-            dataIndex: 'id',
             scopedSlots: { customRender: 'operation' }
           }
         ],
@@ -96,8 +106,11 @@
           username: [{ message: '请输入用户名', required: true, trigger: ['change', 'blur'], whitespace: true }],
           password: [{ message: '请输入密码', required: true, trigger: ['change', 'blur'], whitespace: true }]
         },
-
         visible: false,
+        // 上传文件
+        headers: {
+          authorization: 'authorization-text'
+        },
         labelCol: { span: 4 },
         wrapperCol: { span: 18 }
 
@@ -115,11 +128,7 @@
         })
       },
       deleteTableRecordById (id) {
-        request.post('/user/deleteById', {
-          param: {
-            id: id
-          }
-        })
+        request.post('/user/deleteById?id=' + id)
         .then(data => {
           // 刷新表格
           this.getTableData()
@@ -141,7 +150,31 @@
           }
         })
       },
-
+      // 文件上传后的回调函数
+      handleChange (info) {
+        if (info.file.status !== 'uploading') {
+          console.log(info.file, info.fileList)
+        }
+        if (info.file.status === 'done') {
+          this.$message.success(`${info.file.name} 上传成功！`)
+          this.init()
+        } else if (info.file.status === 'error') {
+          this.$message.error(`${info.file.name} 上传失败`)
+        }
+      },
+      // 文件上传前的判断
+      beforeUpload (file) {
+        // const isJpgOrPng = file.type === 'image/jpeg' || file.type === 'image/png'
+        const isJpgOrPng = file.type === 'file/xlsx'
+        if (!isJpgOrPng) {
+          this.$message.error('只能上传 xlsx 文件')
+        }
+        const isLt2M = file.size / 1024 / 1024 < 2
+        if (!isLt2M) {
+          this.$message.error('Image must smaller than 2MB!')
+        }
+        return isJpgOrPng && isLt2M
+      },
       onDrawerClose () {
         this.visible = false
         // 刷新数据操作
